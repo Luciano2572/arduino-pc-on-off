@@ -22,8 +22,11 @@ byte subnet[] = { 255, 255, 255, 0 };                  //subnet mask
 EthernetServer server(2525);                             //server port     
 int pwrpin = A5;
 int boottime = 5;
+int fanrelay = A2;
 String readString;
 void setup() {
+  pinMode(fanrelay, OUTPUT);
+  digitalWrite(fanrelay, LOW);
   pinMode(buttonPin, INPUT);
   pinMode(pwrpin, INPUT);
   lcd.begin(16, 2);
