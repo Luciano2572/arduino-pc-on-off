@@ -1,34 +1,37 @@
-//Release 1.0.a
+//Release 1.1
+/*
+ OBS: On here, i am using my relay as HIGH being that it is not being triggered (the pwr on wire). Low triggers it. 
+ So it goes LOW - wait 300ms - HIGH to do the trigger
+ if your setup is different you gotta alter these
+ 
+*/
 #include <SPI.h>
 #include <LiquidCrystal.h>
 #include <Ethernet.h>
-#include <Servo.h> 
 LiquidCrystal lcd(8, 9, 5, 4, 3, 2); 
+
 int buttonState;     
 const int buttonPin = 7;
 int lastButtonState = LOW;   
 long lastDebounceTime = 0; 
-long debounceDelay = 80;
-int relay = A1;
-boolean pcstatus = false;
-Servo microservo; 
+long debounceDelay = 30; // Time required for the button to be held down for it to compute it as a press (in ms)
+int relay = A1; // Pin the relay is connected to
 int pos = 0; 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };   //physical mac address
-byte ip[] = { 192, 168, 25, 15 };                      // ip in lan (that's what you need to use in your browser. ("192.168.1.178")
+byte ip[] = { 192, 168, 25, 15 };                      // ip in lan (that's what you need to use in your browser. ("192.168.25.15")
 byte gateway[] = { 192, 168, 1, 1 };                   // internet access via router
 byte subnet[] = { 255, 255, 255, 0 };                  //subnet mask
 EthernetServer server(2525);                             //server port     
+int pwrpin = A5;
+int boottime = 5;
 String readString;
 void setup() {
   pinMode(buttonPin, INPUT);
+  pinMode(pwrpin, INPUT);
   lcd.begin(16, 2);
- // Open serial communications and wait for port to open:
   Serial.begin(9600);
-   while (!Serial) {
-    ; // wait for serial port to connect. Needed for Leonardo only
-  }
   pinMode(relay, OUTPUT);
-  microservo.attach(7);
+  digitalWrite(relay, HIGH); // This is needed, since my relay board inverts the signal and I just figured that after wiring everything up... Check with your board!
   // start the Ethernet connection and the server:
   Ethernet.begin(mac, ip, gateway, subnet);
   server.begin();
@@ -38,7 +41,7 @@ void setup() {
 
 
 void loop() {
-// deprecated  if (!pcstatus){digitalWrite (greenled, LOW); digitalWrite(redled, HIGH);} else {digitalWrite(redled, LOW); digitalWrite(greenled, HIGH);} 
+  boolean pcstatus = ((analogRead(pwrpin) >= 300) ? true : false); // The pwr led from Motherboard is plugged on pin A5 using a 10k resistor to avoid damage, and a 20k resistor pulling down to ground. So when its on, it'll result in a value. From my tests that value is around 400 ish, so >300 will do
   int reading = digitalRead(buttonPin);
   // If the switch changed, due to noise or pressing:
   if (reading != lastButtonState) {
@@ -59,12 +62,12 @@ void loop() {
         //ENTER SHUTDOWN/TURN ON HERE
         if (!pcstatus){
         pcstatus = true;
-               digitalWrite(relay, HIGH);
-               delay(300);
                digitalWrite(relay, LOW);
+               delay(300);
+               digitalWrite(relay, HIGH);
                lcd.setCursor(0, 1);
                lcd.print("PC IS BOOTING");
-               for(int x = 0; x < 60; x++){
+               for(int x = 0; x < boottime; x++){  // Displays the pc is booting msg for 1 minute 
                  lcd.setCursor(0, 1);
                  lcd.print("PC IS BOOTING.  ");
                  delay(250);
@@ -83,14 +86,14 @@ void loop() {
                 lcd.print("Power ON OK, LCL"); 
                 delay(1000);
       } else {
-      digitalWrite(relay, HIGH);
+               digitalWrite(relay, LOW);
                pcstatus = false;
                delay(300);
-               digitalWrite(relay, LOW);
+               digitalWrite(relay, HIGH);
                delay(100);
                lcd.setCursor(0, 1);
                lcd.print("SHUTTING DOWN");
-               for(int x = 0; x < 60; x++){
+               for(int x = 0; x < boottime; x++){ // Displays the pc is shutting down for 1 minute
                  lcd.setCursor(0, 1);
                  lcd.print("SHUTTING DOWN.  ");
                  delay(250);
@@ -160,7 +163,7 @@ else
            client.println("<meta name='apple-mobile-web-app-capable' content='yes' />");
            client.println("<meta name='apple-mobile-web-app-status-bar-style' content='black-translucent' />");
            client.println("<link rel='stylesheet' type='text/css' href='http://randomnerdtutorials.com/ethernetcss.css' />");
-           client.println("<TITLE>Luc's Arduino web</TITLE>");
+           client.println("<TITLE>Remote Arduino PC</TITLE>");
            client.println("</HEAD>");
            client.println("<BODY>");
            client.println("<H1>Arduino PC Test</H1>");
@@ -168,8 +171,8 @@ else
            client.println("<br />");  
            if (!pcstatus){client.println("<H2>PC status: OFF</H2>");} else {client.println("<H2>PC status: ON</H2>");} 
            client.println("<br />");  
-           client.println("<a href=\"/?button1on\"\">Ligar o PC</a>");
-           client.println("<a href=\"/?button1off\"\">Desligar o PC</a><br />");   
+           client.println("<a href=\"/?button1\"\">Switch Status</a>");
+          // client.println("<a href=\"/?button1off\"\">Desligar o PC</a><br />");   
            client.println("<br />");     
            client.println("<br />"); 
            client.println("<p>Propriedade de Luciano</p>");  
@@ -181,14 +184,16 @@ else
            //stopping client
            client.stop();
            //controls the Arduino if you press the buttons
-           if (readString.indexOf("?button1on") >0){
+           if (readString.indexOf("?button1") >0){
+            if (pcstatus = false) 
+            {
                pcstatus = true;
-               digitalWrite(relay, HIGH);
-               delay(300);
                digitalWrite(relay, LOW);
+               delay(300);
+               digitalWrite(relay, HIGH);
                lcd.setCursor(0, 1);
                lcd.print("PC IS BOOTING");
-               for(int x = 0; x < 60; x++){
+               for(int x = 0; x < boottime; x++){
                  lcd.setCursor(0, 1);
                  lcd.print("PC IS BOOTING.  ");
                  delay(250);
@@ -207,15 +212,18 @@ else
                 lcd.print("Power ON OK, WEB"); 
                 delay(1000);
                         }
-           if (readString.indexOf("?button1off") >0){
-               digitalWrite(relay, HIGH);
+
+               else
+
+               {
+               digitalWrite(relay, LOW);
                pcstatus = false;
                delay(300);
-               digitalWrite(relay, LOW);
+               digitalWrite(relay, HIGH);
                delay(100);
                lcd.setCursor(0, 1);
                lcd.print("SHUTTING DOWN");
-               for(int x = 0; x < 60; x++){
+               for(int x = 0; x < boottime; x++){
                  lcd.setCursor(0, 1);
                  lcd.print("SHUTTING DOWN.  ");
                  delay(250);
@@ -242,5 +250,6 @@ else
       }
     }
   }
+}
 }
 
