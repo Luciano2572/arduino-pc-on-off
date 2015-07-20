@@ -1,8 +1,3 @@
-//Release 1.3
-/*
- My relay has a pull-up resistor, keep that in mind when you wire yours!
- 
-*/
 #include <SPI.h>
 #include <LiquidCrystal.h>
 #include <Ethernet.h>
@@ -35,6 +30,7 @@ int boottime = 5;
 String readString;
 bool toggleState();
 bool pcstatus;
+bool checkKey();
 
 void setup() {
     pinMode(buttonPin, INPUT);
@@ -120,7 +116,7 @@ void loop() {
 
                     }
                     lcd.setCursor(0, 1);
-                    lcd.print("Shut Down OK,LCL");
+                    lcd.print("Shut Down OK, LCL");
                     delay(1000);
                 }
             }
@@ -164,10 +160,20 @@ void loop() {
                     //controls the Arduino if you press the buttons
                     //if button pressed, handle button and print a response (success or fail, on/off)
                     if (readString.indexOf("toggleState") > 0) {
-                        if (toggleState()) {
-                        	client.println(1);
+                        // GET ?toggleState=toggleState&key=password64
+                        char* search = "&key=";
+                        char* req = new char[readString.length() + 1];
+                        strcpy(req, readString.c_str());
+                        String pass64 = strtok(req, search); //?toggleState=toggleState
+                        pass64 = strtok(NULL, search); //password64
+                        if (checkKey(pass64)) {
+                            if (toggleState()) {
+                            	client.println("1");
+                            } else {
+                            	client.println("0");
+                            }
                         } else {
-                        	client.println(0);
+                            client.println("Not Authorized");
                         }
 	                    //clearing string for next read
                     } else if (readString.indexOf("getStatus") > 0) {
@@ -175,43 +181,23 @@ void loop() {
                     } else {
 	                    client.println("<html>");
 	                    client.println("<head>");
-	                    client.println("<style>");
-	                    client.println("body {background-color:black}");
-	                    client.println("h1   {color:lightgrey}");
-	                    client.println("h2   {color:white}");
-	                    client.println("h3   {color:white}");
-	                    client.println("p    {color:green}");
-	                    client.println("</style>");
 	                    client.println("<meta name='apple-mobile-web-app-capable' content='yes' />");
 	                    client.println("<meta name='apple-mobile-web-app-status-bar-style' content='black-translucent' />");
-	                    client.println("<link rel='stylesheet' type='text/css' href='http://randomnerdtutorials.com/ethernetcss.css' />");
+	                    client.println("<link rel='stylesheet' type='text/css' href='http://lucianoalberto.zapto.org/arduino/arduino.css' />");
+                      client.println("<link rel='stylesheet' type='text/css' href='http://localhost/tests/sig/arduino.css' />");
 	                    client.println("<script src='https://code.jquery.com/jquery-2.1.4.min.js'></script>");
-	                    client.print("<script src='http://");
-	                    client.print(ipS);
-	                    client.println("/arduino/arduinojs.js'></script>");
-	                    client.println("<script src='http://lucianoalberto.zapto.org/arduino/arduinojs.js'></script>");
+	                    client.print("<script>$.getScript('//' + window.location.hostname + '/arduino/arduinojs.js')");
+                      client.println(".fail(function() {console.warn('loading alternate script');$.getScript('http://lucianoalberto.zapto.org/arduino/arduinojs.js')});</script>");
 	                    client.println("<title>Remote Arduino PC</title>");
 	                    client.println("</head>");
 	                    client.println("<body>");
 	                    client.println("<h1 class='title'>Arduino PC Remote</h1>");
-	                    client.println("<hr />");
-	                    client.println("<br />");
-	                    if (!pcstatus) {
-	                        client.println("<h2>PC status: OFF</h2>");
-	                    } else {
-	                        client.println("<h2>PC status: ON</h2>");
-	                    }
-	                    client.println("<br />");
-	                    client.println("<button class='btn btn-toggle' onclick='sendToggle()'>Switch State</button>");
-	                    client.println("<br />");
-	                    client.println("<br />");
-	                    client.println("<br />");
-	                    client.println("<h3></h3>");
-	                    client.println("<img src='http://i.imgur.com/1eAO9hC.png' />");
-	                    client.println("<br />");
-	                    client.println("<br />");
-	                    client.println("<p class='copyright'>&copy; Luciano 2015</p>");
-	                    client.println("<br />");
+                      client.println("<div class='content'>");
+                      client.println("<span class='result' id='statusResult'>Fetching...</span>");
+                      client.println("<input type='password' id='pass' placeholder='password' onblur='validate()' autofocus />");
+                      client.println("<button class='btn btn-toggle' id='btn-toggle' onclick='sendToggle()'>Switch State</button>");
+                      client.println("<img class='logo' src='https://upload.wikimedia.org/wikipedia/commons/8/87/Arduino_Logo.svg' alt='arduino logo' />");
+                      client.println("</div>");
 	                    client.println("</body>");
 	                    client.println("</html>");
 
@@ -278,4 +264,7 @@ bool toggleState() {
 	    delay(1000);
 	    return true;
 	}
+}
+bool checkKey(String key) {
+    return key == "cGFzc3dvcmQ=";
 }
