@@ -3,9 +3,9 @@
  My relay has a pull-up resistor, keep that in mind when you wire yours!
  
 */
-#include < SPI.h >
-#include < LiquidCrystal.h >
-#include < Ethernet.h >
+#include <SPI.h>
+#include <LiquidCrystal.h>
+#include <Ethernet.h>
 
 LiquidCrystal lcd(8, 9, 5, 4, 3, 2);
 
