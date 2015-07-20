@@ -157,7 +157,7 @@ void loop() {
                     //send a default HTTP200 response
                     client.println("HTTP/1.1 200 OK");
                     client.println("Content-Type: text/html");
-                    client.println("Connection: keep-alive");
+                    //client.println("Connection: keep-alive");
                     client.println();
                     // client.println("<meta http-equiv=\"refresh\" content=\"1\">");
 
@@ -170,7 +170,6 @@ void loop() {
                         	client.println(0);
                         }
 	                    //clearing string for next read
-	                    readString = "";
                     } else if (readString.indexOf("getStatus") > 0) {
                     	client.println((pcstatus) ? "1" : "0");
                     } else {
@@ -189,12 +188,12 @@ void loop() {
 	                    client.println("<script src='https://code.jquery.com/jquery-2.1.4.min.js'></script>");
 	                    client.print("<script src='http://");
 	                    client.print(ipS);
-	                    client.println("/arduino/arduinojs.js' />");
+	                    client.println("/arduino/arduinojs.js'></script>");
 	                    client.println("<script src='http://lucianoalberto.zapto.org/arduino/arduinojs.js'></script>");
 	                    client.println("<title>Remote Arduino PC</title>");
 	                    client.println("</head>");
 	                    client.println("<body>");
-	                    client.println("<h1>Arduino PC Remote</h1>");
+	                    client.println("<h1 class='title'>Arduino PC Remote</h1>");
 	                    client.println("<hr />");
 	                    client.println("<br />");
 	                    if (!pcstatus) {
@@ -203,24 +202,23 @@ void loop() {
 	                        client.println("<h2>PC status: ON</h2>");
 	                    }
 	                    client.println("<br />");
-	                    client.println("<button onclick='sendToggle()'>Switch State</button>");
+	                    client.println("<button class='btn btn-toggle' onclick='sendToggle()'>Switch State</button>");
 	                    client.println("<br />");
 	                    client.println("<br />");
 	                    client.println("<br />");
 	                    client.println("<h3></h3>");
-	                    client.println("<img src="
-	                        "http://i.imgur.com/1eAO9hC.png");
+	                    client.println("<img src='http://i.imgur.com/1eAO9hC.png' />");
 	                    client.println("<br />");
 	                    client.println("<br />");
-	                    client.println("<p>&#169Luciano 2015</p>");
+	                    client.println("<p class='copyright'>&copy; Luciano 2015</p>");
 	                    client.println("<br />");
 	                    client.println("</body>");
 	                    client.println("</html>");
 
 	                    delay(1);
-	                    //stopping client
-	                }                    
-	                client.stop();
+	                }
+	                readString = "";
+	                client.stop();                   
                 }
             }
         }
