@@ -3,10 +3,11 @@
  My relay has a pull-up resistor, keep that in mind when you wire yours!
  
 */
-#
-include < SPI.h > #include < LiquidCrystal.h > #include < Ethernet.h >
+#include < SPI.h >
+#include < LiquidCrystal.h >
+#include < Ethernet.h >
 
-    LiquidCrystal lcd(8, 9, 5, 4, 3, 2);
+LiquidCrystal lcd(8, 9, 5, 4, 3, 2);
 
 int buttonState;
 const int buttonPin = 7;
@@ -21,6 +22,7 @@ byte mac[] = {
 byte ip[] = {
     192, 168, 1, 123
 }; // ip in lan (that's what you need to use in your browser. ("192.168.25.15")
+String ipS = "192.168.1.123";
 byte gateway[] = {
     192, 168, 1, 1
 }; // internet access via router
@@ -144,7 +146,8 @@ void loop() {
             if (client.available()) {
 
             	//this should also contain the recieved POST data as well as the GET data
-                readString += client.read();
+            	char c = client.read();
+                readString += c;
 
                 //if HTTP request has ended
                 if (c == '\n') {
@@ -183,6 +186,9 @@ void loop() {
 	                    client.println("<meta name='apple-mobile-web-app-status-bar-style' content='black-translucent' />");
 	                    client.println("<link rel='stylesheet' type='text/css' href='http://randomnerdtutorials.com/ethernetcss.css' />");
 	                    client.println("<script src='https://code.jquery.com/jquery-2.1.4.min.js' />");
+	                    client.println("<script src='http://");
+	                    client.println(ipS);
+	                    client.println("/arduino/arduinojs.js' />");
 	                    client.println("<title>Remote Arduino PC</title>");
 	                    client.println("</head>");
 	                    client.println("<body>");
@@ -206,19 +212,6 @@ void loop() {
 	                    client.println("<br />");
 	                    client.println("<p>&#169Luciano 2015</p>");
 	                    client.println("<br />");
-	                    client.println("<script type='text/javascript'>"+
-	                    			   "function sendToggle() {"+
-	                    			   "$.post('/', {toggleState: 'toggleState'},"+
-									   "function(result) {"+
-											"if (result == '1') {"+
-												"console.info('toggled');"+
-											"} else {"+
-												"console.error('toggle failed');"+
-											"}"+
-										"});"+
-	                    			   "}"+
-	                    			   "</script>"
-	                    			  );
 	                    client.println("</body>");
 	                    client.println("</html>");
 
