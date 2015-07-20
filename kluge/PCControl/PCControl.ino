@@ -4,7 +4,9 @@
  
 */
 #
-include < SPI.h > #include < LiquidCrystal.h > #include < Ethernet.h >
+#include <SPI.h>
+#include <LiquidCrystal.h> 
+#include <Ethernet.h>
 
     LiquidCrystal lcd(8, 9, 5, 4, 3, 2);
 
