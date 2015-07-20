@@ -1,4 +1,4 @@
-//Release 1.2
+//Release 1.3
 /*
  My relay has a pull-up resistor, keep that in mind when you wire yours!
  
@@ -6,6 +6,7 @@
 #include <SPI.h>
 #include <LiquidCrystal.h>
 #include <Ethernet.h>
+
 LiquidCrystal lcd(8, 9, 5, 4, 3, 2); 
 
 int buttonState;     
@@ -16,10 +17,10 @@ long debounceDelay = 30; // Time required for the button to be held down for it 
 int relay = A1; // Pin the relay is connected to
 int pos = 0; 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };   //physical mac address
-byte ip[] = { 192, 168, 25, 15 };                      // ip in lan (that's what you need to use in your browser. ("192.168.25.15")
+byte ip[] = { 192, 168, 1, 123 };                      // ip in lan (that's what you need to use in your browser. ("192.168.25.15")
 byte gateway[] = { 192, 168, 1, 1 };                   // internet access via router
 byte subnet[] = { 255, 255, 255, 0 };                  //subnet mask
-EthernetServer server(2525);                             //server port     
+EthernetServer server(80);                             //server port     
 int pwrpin = A5;
 int boottime = 5;
 String readString;
@@ -158,21 +159,33 @@ else
            client.println();     
            client.println("<HTML>");
            client.println("<HEAD>");
+           client.println("<style>");
+           client.println("body {background-color:black}");
+           client.println("H1   {color:lightgrey}");
+           client.println("H2   {color:white}");
+           client.println("H3   {color:white}");
+           client.println("p    {color:green}");
+           client.println("</style>");
            client.println("<meta name='apple-mobile-web-app-capable' content='yes' />");
            client.println("<meta name='apple-mobile-web-app-status-bar-style' content='black-translucent' />");
            client.println("<link rel='stylesheet' type='text/css' href='http://randomnerdtutorials.com/ethernetcss.css' />");
            client.println("<TITLE>Remote Arduino PC</TITLE>");
            client.println("</HEAD>");
            client.println("<BODY>");
-           client.println("<H1>Arduino PC Test</H1>");
+           client.println("<H1>Arduino PC Remote</H1>");
            client.println("<hr />");
            client.println("<br />");  
            if (!pcstatus){client.println("<H2>PC status: OFF</H2>");} else {client.println("<H2>PC status: ON</H2>");} 
            client.println("<br />");  
            client.println("<a href=\"/?button1\"\">Switch Status</a>");
+           client.println("<br />");  
+           client.println("<br />");  
+           client.println("<br />");  
+           client.println("<h3></h3>");
+           client.println("<img src=""http://i.imgur.com/1eAO9hC.png");
            client.println("<br />");     
            client.println("<br />"); 
-           client.println("<p>@Luciano 2015</p>");  
+           client.println("<p>&#169Luciano 2015</p>");  
            client.println("<br />"); 
            client.println("</BODY>");
            client.println("</HTML>");
