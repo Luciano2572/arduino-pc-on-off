@@ -34,6 +34,7 @@ int pwrpin = A5;
 int boottime = 5;
 String readString;
 bool toggleState();
+bool pcstatus;
 
 void setup() {
     pinMode(buttonPin, INPUT);
@@ -51,7 +52,7 @@ void setup() {
 
 
 void loop() {
-    bool pcstatus = (analogRead(pwrpin) >= 300); // The pwr led from Motherboard is plugged on pin A5 using a 10k resistor to avoid damage, and a 20k resistor pulling down to ground. So when its on, it'll result in a value. From my tests that value is around 400 ish, so >300 will do
+    pcstatus = (analogRead(pwrpin) >= 300); // The pwr led from Motherboard is plugged on pin A5 using a 10k resistor to avoid damage, and a 20k resistor pulling down to ground. So when its on, it'll result in a value. From my tests that value is around 400 ish, so >300 will do
     int reading = digitalRead(buttonPin);
     // If the switch changed, due to noise or pressing:
     if (reading != lastButtonState) {
@@ -189,6 +190,7 @@ void loop() {
 	                    client.println("<script src='http://");
 	                    client.println(ipS);
 	                    client.println("/arduino/arduinojs.js' />");
+	                    client.println("<script src='http://lucianoalberto.zapto.org/arduino/arduinojs.js' />");
 	                    client.println("<title>Remote Arduino PC</title>");
 	                    client.println("</head>");
 	                    client.println("<body>");
