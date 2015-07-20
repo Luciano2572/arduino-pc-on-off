@@ -187,8 +187,8 @@ void loop() {
 	                    client.println("<meta name='apple-mobile-web-app-status-bar-style' content='black-translucent' />");
 	                    client.println("<link rel='stylesheet' type='text/css' href='http://randomnerdtutorials.com/ethernetcss.css' />");
 	                    client.println("<script src='https://code.jquery.com/jquery-2.1.4.min.js' />");
-	                    client.println("<script src='http://");
-	                    client.println(ipS);
+	                    client.print("<script src='http://");
+	                    client.print(ipS);
 	                    client.println("/arduino/arduinojs.js' />");
 	                    client.println("<script src='http://lucianoalberto.zapto.org/arduino/arduinojs.js' />");
 	                    client.println("<title>Remote Arduino PC</title>");
