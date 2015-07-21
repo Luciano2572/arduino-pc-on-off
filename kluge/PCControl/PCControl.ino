@@ -160,12 +160,18 @@ void loop() {
                     //controls the Arduino if you press the buttons
                     //if button pressed, handle button and print a response (success or fail, on/off)
                     if (readString.indexOf("toggleState") > 0) {
-                        // GET ?toggleState=toggleState&key=password64
-                        char* search = "&key=";
+                        // GET ?toggleState=toggleState&key=password64 HTTP/1.1
+                        /*char* search = "&key=";
                         char* req = new char[readString.length() + 1];
                         strcpy(req, readString.c_str());
                         String pass64 = strtok(req, search); //?toggleState=toggleState
-                        pass64 = strtok(NULL, search); //password64
+                        pass64 = strtok(NULL, search); //password64 */
+
+                        String queryString = readString.substring(readString.indexOf('?'), readString.indexOf(' ', 5)); //?toggleState=toggleState&key=password64
+
+                        int ind1 = readString.indexOf('&') + 4; //&key=
+                        String pass64 = readString.substring(ind1); //password64
+                        
                         if (checkKey(pass64)) {
                             if (toggleState()) {
                             	client.println("1");
