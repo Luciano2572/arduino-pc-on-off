@@ -17,7 +17,6 @@ byte mac[] = {
 byte ip[] = {
     192, 168, 1, 123
 }; // ip in lan (that's what you need to use in your browser. ("192.168.25.15")
-String ipS = "192.168.1.123";
 byte gateway[] = {
     192, 168, 1, 1
 }; // internet access via router
@@ -27,8 +26,7 @@ byte subnet[] = {
 EthernetServer server(80); //server port     
 int pwrpin = A5;
 int boottime = 5;
-String readString;
-bool toggleState();
+void toggleState();
 bool pcstatus;
 bool checkKey();
 
@@ -139,11 +137,12 @@ void loop() {
 
     }
     if (client) {
+      String readString;
         while (client.connected()) {
             if (client.available()) {
 
-            	//this should also contain the recieved POST data as well as the GET data
-            	char c = client.read();
+              //this should also contain the recieved POST data as well as the GET data
+              char c = client.read();
                 readString += c;
 
                 //if HTTP request has ended
@@ -153,123 +152,111 @@ void loop() {
                     //send a default HTTP200 response
                     client.println("HTTP/1.1 200 OK");
                     client.println("Content-Type: text/html");
-                    //client.println("Connection: keep-alive");
                     client.println();
-                    // client.println("<meta http-equiv=\"refresh\" content=\"1\">");
 
                     //controls the Arduino if you press the buttons
                     //if button pressed, handle button and print a response (success or fail, on/off)
                     if (readString.indexOf("toggleState") > 0) {
                         // GET ?toggleState=toggleState&key=password64 HTTP/1.1
-                        /*char* search = "&key=";
-                        char* req = new char[readString.length() + 1];
-                        strcpy(req, readString.c_str());
-                        String pass64 = strtok(req, search); //?toggleState=toggleState
-                        pass64 = strtok(NULL, search); //password64 */
-
                         String queryString = readString.substring(readString.indexOf('?'), readString.indexOf(' ', 5)); //?toggleState=toggleState&key=password64
-
-                        int ind1 = readString.indexOf('&') + 4; //&key=
-                        String pass64 = readString.substring(ind1); //password64
+                        int ind1 = queryString.indexOf('&') + 4; //&key=
+                        String pass64 = queryString.substring(ind1); //password64
+                        Serial.println(queryString);
+                        Serial.println(pass64);
                         
                         if (checkKey(pass64)) {
-                            if (toggleState()) {
-                            	client.println("1");
-                            } else {
-                            	client.println("0");
-                            }
+                            toggleState();
+                            client.println("1");
                         } else {
                             client.println("Not Authorized");
                         }
-	                    //clearing string for next read
+                      //clearing string for next read
                     } else if (readString.indexOf("getStatus") > 0) {
-                    	client.println((pcstatus) ? "1" : "0");
+                      client.println((pcstatus) ? "1" : "0");
                     } else {
-	                    client.println("<html>");
-	                    client.println("<head>");
-	                    client.println("<meta name='apple-mobile-web-app-capable' content='yes' />");
-	                    client.println("<meta name='apple-mobile-web-app-status-bar-style' content='black-translucent' />");
-	                    client.println("<link rel='stylesheet' type='text/css' href='http://lucianoalberto.zapto.org/arduino/arduino.css' />");
+                      client.println("<html>");
+                      client.println("<head>");
+                      client.println("<meta name='apple-mobile-web-app-capable' content='yes' />");
+                      client.println("<meta name='apple-mobile-web-app-status-bar-style' content='black-translucent' />");
+                      client.println("<link rel='stylesheet' type='text/css' href='http://lucianoalberto.zapto.org/arduino/arduino.css' />");
                       client.println("<link rel='stylesheet' type='text/css' href='http://localhost/tests/sig/arduino.css' />");
-	                    client.println("<script src='https://code.jquery.com/jquery-2.1.4.min.js'></script>");
-	                    client.print("<script>$.getScript('//' + window.location.hostname + '/arduino/arduinojs.js')");
+                      client.println("<script src='https://code.jquery.com/jquery-2.1.4.min.js'></script>");
+                      client.print("<script>$.getScript('//' + window.location.hostname + '/arduino/arduinojs.js')");
                       client.println(".fail(function() {console.warn('loading alternate script');$.getScript('http://lucianoalberto.zapto.org/arduino/arduinojs.js')});</script>");
-	                    client.println("<title>Remote Arduino PC</title>");
-	                    client.println("</head>");
-	                    client.println("<body>");
-	                    client.println("<h1 class='title'>Arduino PC Remote</h1>");
+                      client.println("<title>Remote Arduino PC</title>");
+                      client.println("</head>");
+                      client.println("<body>");
+                      client.println("<h1 class='title'>Arduino PC Remote</h1>");
                       client.println("<div class='content'>");
                       client.println("<span class='result' id='statusResult'>Fetching...</span>");
                       client.println("<input type='password' id='pass' placeholder='password' onblur='validate()' autofocus />");
                       client.println("<button class='btn btn-toggle' id='btn-toggle' onclick='sendToggle()'>Switch State</button>");
                       client.println("<img class='logo' src='https://upload.wikimedia.org/wikipedia/commons/8/87/Arduino_Logo.svg' alt='arduino logo' />");
                       client.println("</div>");
-	                    client.println("</body>");
-	                    client.println("</html>");
+                      client.println("</body>");
+                      client.println("</html>");
 
-	                    delay(1);
-	                }
-	                readString = "";
-	                client.stop();                   
+                      delay(1);
+                  }
+                  readString = "";
+                  client.stop();                   
                 }
             }
         }
     }
 }
-bool toggleState() {
-	//controls the Arduino if you press the buttons
-	if (!pcstatus) {
-	    pcstatus = true;
-	    digitalWrite(relay, LOW);
-	    delay(300);
-	    digitalWrite(relay, HIGH);
-	    lcd.setCursor(0, 1);
-	    lcd.print("PC IS BOOTING");
-	    for (int x = 0; x < boottime; x++) {
-	    	lcd.setCursor(0, 1);
-	      	lcd.print("PC IS BOOTING.  ");
-	      	delay(250);
-	      	lcd.setCursor(0, 1);
-	      	lcd.print("PC IS BOOTING.. ");
-	      	delay(250);
-	      	lcd.setCursor(0, 1);
-	      	lcd.print("PC IS BOOTING...");
-	      	delay(250);
-	      	lcd.setCursor(0, 1);
-	      	lcd.print("PC IS BOOTING   ");
-	      	delay(250);
-	    }
-	    lcd.setCursor(0, 1);
-	    lcd.print("Power ON OK, WEB");
-	    delay(1000);
-	    return true;
-	} else {
-	    digitalWrite(relay, LOW);
-	    pcstatus = false;
-	    delay(300);
-	    digitalWrite(relay, HIGH);
-	    delay(100);
-	    lcd.setCursor(0, 1);
-	    lcd.print("SHUTTING DOWN");
-	    for (int x = 0; x < boottime; x++) {
-	      	lcd.setCursor(0, 1);
-	      	lcd.print("SHUTTING DOWN.  ");
-	      	delay(250);
-	      	lcd.setCursor(0, 1);
-	      	lcd.print("SHUTTING DOWN.. ");
-	      	delay(250);
-	      	lcd.setCursor(0, 1);
-	      	lcd.print("SHUTTING DOWN...");
-	      	delay(250);
-	      	lcd.setCursor(0, 1);
-	      	lcd.print("SHUTTING DOWN   ");
-	      	delay(250);
-	    }
-	    lcd.setCursor(0, 1);
-	    lcd.print("Shut Down OK, WEB");
-	    delay(1000);
-	    return true;
-	}
+void toggleState() {
+  //controls the Arduino if you press the buttons
+  if (!pcstatus) {
+      pcstatus = true;
+      digitalWrite(relay, LOW);
+      delay(300);
+      digitalWrite(relay, HIGH);
+      lcd.setCursor(0, 1);
+      lcd.print("PC IS BOOTING");
+      for (int x = 0; x < boottime; x++) {
+        lcd.setCursor(0, 1);
+          lcd.print("PC IS BOOTING.  ");
+          delay(250);
+          lcd.setCursor(0, 1);
+          lcd.print("PC IS BOOTING.. ");
+          delay(250);
+          lcd.setCursor(0, 1);
+          lcd.print("PC IS BOOTING...");
+          delay(250);
+          lcd.setCursor(0, 1);
+          lcd.print("PC IS BOOTING   ");
+          delay(250);
+      }
+      lcd.setCursor(0, 1);
+      lcd.print("Power ON OK, WEB");
+      delay(1000);
+  } else {
+      digitalWrite(relay, LOW);
+      pcstatus = false;
+      delay(300);
+      digitalWrite(relay, HIGH);
+      delay(100);
+      lcd.setCursor(0, 1);
+      lcd.print("SHUTTING DOWN");
+      for (int x = 0; x < boottime; x++) {
+          lcd.setCursor(0, 1);
+          lcd.print("SHUTTING DOWN.  ");
+          delay(250);
+          lcd.setCursor(0, 1);
+          lcd.print("SHUTTING DOWN.. ");
+          delay(250);
+          lcd.setCursor(0, 1);
+          lcd.print("SHUTTING DOWN...");
+          delay(250);
+          lcd.setCursor(0, 1);
+          lcd.print("SHUTTING DOWN   ");
+          delay(250);
+      }
+      lcd.setCursor(0, 1);
+      lcd.print("Shut Down OK, WEB");
+      delay(1000);
+  }
 }
 bool checkKey(String key) {
     return key == "cGFzc3dvcmQ=";
