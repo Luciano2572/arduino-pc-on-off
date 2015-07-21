@@ -15,22 +15,25 @@ byte mac[] = {
     0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
 }; //physical mac address
 byte ip[] = {
-    192, 168, 25, 178
+    192, 168, 25, 123
 }; // ip in lan (that's what you need to use in your browser. ("192.168.25.15")
 byte gateway[] = {
-    192, 168, 1, 1
+    192, 168, 25, 1
 }; // internet access via router
 byte subnet[] = {
     255, 255, 255, 0
 }; //subnet mask
-EthernetServer server(80); //server port     
+EthernetServer server(2525); //server port     
 int pwrpin = A5;
-int boottime = 5;
+int boottime = 2; //this number * 500ms + 1sec
 //void toggleState();
-bool pcstatus;
+bool pcstatus = false;
 bool checkKey();
 
 void setup() {
+  pinMode(A3, OUTPUT);
+
+ digitalWrite(A3, LOW);
     pinMode(buttonPin, INPUT);
     pinMode(pwrpin, INPUT);
     lcd.begin(16, 2);
@@ -40,7 +43,7 @@ void setup() {
     // start the Ethernet connection and the server:
     Ethernet.begin(mac, ip, gateway, subnet);
     server.begin();
-    Serial.print("server is at ");
+    //Serial.print("server is at ");
     Serial.println(Ethernet.localIP());
 }
 
@@ -137,6 +140,7 @@ void loop() {
 
     }
     if (client) {
+      //Serial.println("Ethernet client created");
       String readString;
         while (client.connected()) {
             if (client.available()) {
@@ -147,7 +151,7 @@ void loop() {
 
                 //if HTTP request has ended
                 if (c == '\n') {
-                  Serial.print("readString: ");
+                  //Serial.print("readString: ");
                     Serial.println(readString); //print to serial monitor for debuging
 
                     //send a default HTTP200 response
@@ -160,16 +164,19 @@ void loop() {
                     if (readString.indexOf("toggleState") > 0) {
                         // GET ?toggleState=toggleState&key=password64 HTTP/1.1
                         String queryString = readString.substring(readString.indexOf('?'), readString.indexOf(' ', 5)); //?toggleState=toggleState&key=password64
-                        int ind1 = queryString.indexOf('&') + 4; //&key=
+                        int ind1 = queryString.indexOf('&') + 5; //&key=
                         String pass64 = queryString.substring(ind1); //password64
-                        Serial.print("queryString: ");
+                        //Serial.print("queryString: ");
                         Serial.println(queryString);
-                        Serial.print("pass64: ");
+                        //Serial.print("pass64: ");
                         Serial.println(pass64);
                         
                         if (checkKey(pass64)) {
+                          //Serial.println("pass64 correct");
+
       if (!pcstatus) {
       pcstatus = true;
+      digitalWrite(A3, HIGH);
       digitalWrite(relay, LOW);
       delay(300);
       digitalWrite(relay, HIGH);
@@ -178,12 +185,13 @@ void loop() {
       for (int x = 0; x < boottime; x++) {
         lcd.setCursor(0, 1);
           lcd.print("PC IS BOOTING.  ");
-          delay(1000);
+          delay(500);
       }
       lcd.setCursor(0, 1);
       lcd.print("Power ON OK, WEB");
       delay(1000);
       } else {
+        digitalWrite(A3, LOW);
       digitalWrite(relay, LOW);
       pcstatus = false;
       delay(300);
@@ -194,20 +202,21 @@ void loop() {
       for (int x = 0; x < boottime; x++) {
           lcd.setCursor(0, 1);
           lcd.print("SHUTTING DOWN.  ");
-          delay(1000);
+          delay(500);
       }
       lcd.setCursor(0, 1);
       lcd.print("Shut Down OK, WEB");
       delay(1000);
   }
-                            client.println("1");
+                            client.println("success");
                         } else {
                             client.println("Not Authorized");
                         }
                       //clearing string for next read
                     } else if (readString.indexOf("getStatus") > 0) {
                       Serial.println("Recieved status request");
-                      client.println((pcstatus) ? "1" : "0");
+                      client.println((pcstatus) ? "true" : "false");
+                      //client.println(pcstatus);
                     } else {
                       Serial.println("serving page");
                       client.println("<html>");
@@ -215,9 +224,9 @@ void loop() {
                       client.println("<meta name='apple-mobile-web-app-capable' content='yes' />");
                       client.println("<meta name='apple-mobile-web-app-status-bar-style' content='black-translucent' />");
                       client.println("<link rel='stylesheet' type='text/css' href='http://lucianoalberto.zapto.org/arduino/arduino.css' />");
-                      client.println("<link rel='stylesheet' type='text/css' href='http://localhost/tests/sig/arduino.css' />");
+                      client.println("<link rel='stylesheet' type='text/css' href='http://192.168.25.166/arduino/arduino.css' />");
                       client.println("<script src='https://code.jquery.com/jquery-2.1.4.min.js'></script>");
-                      client.print("<script>$.getScript('//' + window.location.hostname + '/arduino/arduinojs.js')");
+                      client.print("<script>$.getScript('//192.168.25.166/arduino/arduinojs.js')");
                       client.println(".fail(function() {console.warn('loading alternate script');$.getScript('http://lucianoalberto.zapto.org/arduino/arduinojs.js')});</script>");
                       client.println("<title>Remote Arduino PC</title>");
                       client.println("</head>");
@@ -241,60 +250,6 @@ void loop() {
         }
     }
 }
-/*
-void toggleState() {
-  //controls the Arduino if you press the buttons
-  if (!pcstatus) {
-      pcstatus = true;
-      digitalWrite(relay, LOW);
-      delay(300);
-      digitalWrite(relay, HIGH);
-      lcd.setCursor(0, 1);
-      lcd.print("PC IS BOOTING");
-      for (int x = 0; x < boottime; x++) {
-        lcd.setCursor(0, 1);
-          lcd.print("PC IS BOOTING.  ");
-          delay(250);
-          lcd.setCursor(0, 1);
-          lcd.print("PC IS BOOTING.. ");
-          delay(250);
-          lcd.setCursor(0, 1);
-          lcd.print("PC IS BOOTING...");
-          delay(250);
-          lcd.setCursor(0, 1);
-          lcd.print("PC IS BOOTING   ");
-          delay(250);
-      }
-      lcd.setCursor(0, 1);
-      lcd.print("Power ON OK, WEB");
-      delay(1000);
-  } else {
-      digitalWrite(relay, LOW);
-      pcstatus = false;
-      delay(300);
-      digitalWrite(relay, HIGH);
-      delay(100);
-      lcd.setCursor(0, 1);
-      lcd.print("SHUTTING DOWN");
-      for (int x = 0; x < boottime; x++) {
-          lcd.setCursor(0, 1);
-          lcd.print("SHUTTING DOWN.  ");
-          delay(250);
-          lcd.setCursor(0, 1);
-          lcd.print("SHUTTING DOWN.. ");
-          delay(250);
-          lcd.setCursor(0, 1);
-          lcd.print("SHUTTING DOWN...");
-          delay(250);
-          lcd.setCursor(0, 1);
-          lcd.print("SHUTTING DOWN   ");
-          delay(250);
-      }
-      lcd.setCursor(0, 1);
-      lcd.print("Shut Down OK, WEB");
-      delay(1000);
-  }
-}*/
 bool checkKey(String key) {
-    return key == "cGFzc3dvcmQ=";
+    return key == "cGFzc3dvcmQ%3D"; //base64 encoded 'password'
 }
