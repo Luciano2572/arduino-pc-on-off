@@ -161,7 +161,9 @@ void loop() {
                         String queryString = readString.substring(readString.indexOf('?'), readString.indexOf(' ', 5)); //?toggleState=toggleState&key=password64
                         int ind1 = queryString.indexOf('&') + 4; //&key=
                         String pass64 = queryString.substring(ind1); //password64
+                        Serial.print("queryString:");
                         Serial.println(queryString);
+                        Serial.print("pass64:");
                         Serial.println(pass64);
                         
                         if (checkKey(pass64)) {
